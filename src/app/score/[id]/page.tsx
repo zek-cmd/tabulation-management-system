@@ -590,7 +590,7 @@ export default function JudgeScorePage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-background p-2">
       <Card className="w-full max-w-7xl mx-auto p-4 flex flex-col gap-1 shadow-xl overflow-x-auto h-[95vh]">
-        <div className="flex flex-row items-start justify-between w-full mb-4">
+        <div className="flex flex-row items-start justify-between w-full">
           <div className="flex-1 text-left text-base text-muted-foreground font-medium">
             Judge: <span className="text-primary font-semibold">{judge?.name}</span>
           </div>
