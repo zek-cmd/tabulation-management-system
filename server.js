@@ -204,9 +204,37 @@ app.prepare().then(() => {
   });
 
   const port = process.env.PORT || 3000;
-  server.listen(port, (err) => {
+  // Bind to every network interface so other devices (judges' phones) can reach the app.
+  // Override with HOST=127.0.0.1 to keep it on this machine only.
+  const host = process.env.HOST || '0.0.0.0';
+
+  server.listen(port, host, (err) => {
     if (err) throw err;
     console.log(`> Ready on http://localhost:${port}`);
+
+    if (host === '0.0.0.0' || host === '::') {
+      const os = require('os');
+      const nets = os.networkInterfaces();
+      const addresses = [];
+      for (const name of Object.keys(nets)) {
+        for (const net of nets[name] || []) {
+          const family = typeof net.family === 'string' ? net.family : `IPv${net.family}`;
+          if (family === 'IPv4' && !net.internal) {
+            addresses.push(net.address);
+          }
+        }
+      }
+      if (addresses.length > 0) {
+        console.log('> On your network (use this on judges\' phones):');
+        for (const address of addresses) {
+          console.log(`>   http://${address}:${port}`);
+        }
+      } else {
+        console.log('> No network connection found - only localhost works.');
+      }
+    } else {
+      console.log(`> Bound to ${host} only - other devices cannot connect.`);
+    }
   });
 });
 
