@@ -15,6 +15,7 @@ model Event {
   institutionName String?
   institutionAddress String?
   venue       String?
+  logoUrl     String?
   status      EventStatus @default(ACTIVE)
   currentPhase Phase      @default(PRELIMINARY)
   hasTwoPhases Boolean    @default(false)

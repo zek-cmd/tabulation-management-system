@@ -1,11 +1,22 @@
-import Image from "next/image";
+type PrintEvent = {
+  name: string;
+  date: string;
+  institutionName?: string;
+  institutionAddress?: string;
+  venue?: string;
+  logoUrl?: string | null;
+};
 
-export function PrintHeader({ event }: { event: { name: string; date: string; institutionName?: string; institutionAddress?: string; venue?: string } | null }) {
+export function PrintHeader({ event }: { event: PrintEvent | null }) {
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+  const logoSrc = event?.logoUrl ? `${basePath}${event.logoUrl}` : `${basePath}/favicon.ico`;
+  // next/image needs a plain <img> here: uploaded logos are not known at build time
   return (
     // <div className="w-full flex flex-col items-center mb-8 print:mb-4">
     <div className="w-full flex flex-col mb-8 print:mb-4">
       <div className="flex items-center gap-4">
-        <Image src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/favicon.ico`} alt="Logo" width={72} height={72} className="rounded" />
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={logoSrc} alt="Logo" width={72} height={72} className="rounded object-contain" />
         {/* <div className="flex flex-col items-center"> */}
         <div className="flex flex-col">
           <span className="text-lg font-bold">{event?.institutionName || "Institution Name"}</span>

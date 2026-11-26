@@ -23,6 +23,7 @@ export async function GET(req: Request) {
         institutionName: true,
         institutionAddress: true,
         venue: true,
+        logoUrl: true,
       },
     });
   } else {
@@ -36,6 +37,7 @@ export async function GET(req: Request) {
         institutionName: true,
         institutionAddress: true,
         venue: true,
+        logoUrl: true,
       },
     });
   }

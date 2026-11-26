@@ -15,6 +15,7 @@ export default function PrintRawScoresPage({ params, searchParams }: { params: P
     institutionName?: string;
     institutionAddress?: string;
     venue?: string;
+    logoUrl?: string | null;
   } | null>(null);
   const [judge, setJudge] = React.useState<{ name: string, number: string } | null>(null);
 
@@ -29,6 +30,7 @@ export default function PrintRawScoresPage({ params, searchParams }: { params: P
             institutionName: event.institutionName,
             institutionAddress: event.institutionAddress,
             venue: event.venue,
+            logoUrl: event.logoUrl,
           });
         } else {
           setEvent(null);

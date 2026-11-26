@@ -21,7 +21,7 @@ export default function PrintRankPerJudgePage() {
 
   if (loading) return <div className="p-8 text-center">Loading...</div>;
 
-  function isEventType(event: unknown): event is { name: string; date: string; institutionName?: string; institutionAddress?: string; venue?: string } {
+  function isEventType(event: unknown): event is { name: string; date: string; institutionName?: string; institutionAddress?: string; venue?: string; logoUrl?: string | null } {
     if (typeof event !== 'object' || event === null) return false;
     const e = event as { name?: unknown; date?: unknown };
     return typeof e.name === 'string' && typeof e.date === 'string';

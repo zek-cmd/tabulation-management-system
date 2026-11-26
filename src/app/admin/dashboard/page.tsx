@@ -21,6 +21,7 @@ type EventSummary = {
   institutionName?: string;
   institutionAddress?: string;
   venue?: string;
+  logoUrl?: string | null;
 };
 
 type User = {
@@ -43,6 +44,8 @@ export default function AdminDashboard() {
   const [editInstitutionName, setEditInstitutionName] = useState("");
   const [editInstitutionAddress, setEditInstitutionAddress] = useState("");
   const [editVenue, setEditVenue] = useState("");
+  const [editLogoUrl, setEditLogoUrl] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
   const [editHasTwoPhases, setEditHasTwoPhases] = useState(false);
   const [editSeparateGenders, setEditSeparateGenders] = useState(false);
   const [editSeparateTalent, setEditSeparateTalent] = useState(false);
@@ -83,6 +86,7 @@ export default function AdminDashboard() {
     setEditInstitutionName(event.institutionName || "");
     setEditInstitutionAddress(event.institutionAddress || "");
     setEditVenue(event.venue || "");
+    setEditLogoUrl(event.logoUrl || null);
     
     // Fetch full event data to get the new fields
     try {
@@ -92,6 +96,7 @@ export default function AdminDashboard() {
         setEditHasTwoPhases(fullEvent.hasTwoPhases !== undefined ? fullEvent.hasTwoPhases : false);
         setEditSeparateGenders(fullEvent.separateGenders || false);
         setEditSeparateTalent(fullEvent.separateTalent || false);
+        setEditLogoUrl(fullEvent.logoUrl || null);
         setEditFinalistsCount(fullEvent.finalistsCount ? fullEvent.finalistsCount.toString() : "");
         setEditTieBreakingStrategy(fullEvent.tieBreakingStrategy || "INCLUDE_TIES");
       }
@@ -106,6 +111,47 @@ export default function AdminDashboard() {
     
     setEditFormError("");
     setEditDialogOpen(true);
+  };
+
+  const handleLogoUpload = async (eventId: number, file: File) => {
+    setLogoUploading(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      body.append("eventId", String(eventId));
+      const res = await fetch(getApiUrl("/api/admin/logo"), { method: "POST", body });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to upload logo");
+        return;
+      }
+      setEditLogoUrl(data.logoUrl);
+      toast.success("Logo updated");
+      setRefreshEvents(k => k + 1);
+    } catch {
+      toast.error("Failed to upload logo");
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
+  const handleLogoRemove = async (eventId: number) => {
+    setLogoUploading(true);
+    try {
+      const res = await fetch(getApiUrl(`/api/admin/logo?eventId=${eventId}`), { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to remove logo");
+        return;
+      }
+      setEditLogoUrl(null);
+      toast.success("Logo removed");
+      setRefreshEvents(k => k + 1);
+    } catch {
+      toast.error("Failed to remove logo");
+    } finally {
+      setLogoUploading(false);
+    }
   };
 
   const handleEditEvent = async (e: React.FormEvent) => {
@@ -973,6 +1019,54 @@ export default function AdminDashboard() {
                                     value={editVenue}
                                     onChange={e => setEditVenue(e.target.value)}
                                   />
+                                </div>
+                                <div>
+                                  <label className="text-sm font-medium">Institution Logo</label>
+                                  <div className="mt-2 flex items-center gap-3">
+                                    <img
+                                      src={`${process.env.NEXT_PUBLIC_BASE_PATH || ""}${editLogoUrl || "/favicon.ico"}`}
+                                      alt="Institution logo"
+                                      className="h-16 w-16 rounded border object-contain bg-white"
+                                    />
+                                    <div className="flex flex-col gap-2">
+                                      <input
+                                        id={`edit-logo-input-${event.id}`}
+                                        type="file"
+                                        accept="image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon"
+                                        className="hidden"
+                                        onChange={e => {
+                                          const file = e.target.files?.[0];
+                                          if (file) handleLogoUpload(event.id, file);
+                                          e.target.value = "";
+                                        }}
+                                      />
+                                      <div className="flex gap-2">
+                                        <Button
+                                          type="button"
+                                          variant="outline"
+                                          size="sm"
+                                          disabled={logoUploading}
+                                          onClick={() => document.getElementById(`edit-logo-input-${event.id}`)?.click()}
+                                        >
+                                          {logoUploading ? "Uploading..." : "Upload Logo"}
+                                        </Button>
+                                        {editLogoUrl && (
+                                          <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            disabled={logoUploading}
+                                            onClick={() => handleLogoRemove(event.id)}
+                                          >
+                                            Remove
+                                          </Button>
+                                        )}
+                                      </div>
+                                      <span className="text-xs text-muted-foreground">
+                                        PNG, JPG, WEBP or SVG, up to 2 MB. Used on printed results.
+                                      </span>
+                                    </div>
+                                  </div>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   <Switch
