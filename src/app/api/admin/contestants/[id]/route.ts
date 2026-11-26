@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { number, name, sex } = await req.json();
+  const { number, name, sex, grade } = await req.json();
   const { id } = await params;
   if (!number || !name || !id) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
@@ -13,6 +13,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       number: Number(number),
       name,
       sex: sex || null,
+      grade: grade || null,
     },
   });
   return NextResponse.json(contestant);

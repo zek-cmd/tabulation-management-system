@@ -18,6 +18,7 @@ interface Contestant {
   number: number;
   name: string;
   sex?: string;
+  grade?: string;
 }
 
 interface Criteria {
@@ -646,7 +647,7 @@ export default function JudgeScorePage() {
             <table className="min-w-full border-separate" style={{ borderSpacing: 0 }}>
               <thead className="sticky top-0 bg-background z-10">
                 <tr>
-                  <th className="border-b-2 border-muted p-2 text-center align-bottom" rowSpan={2}>Contestant #</th>
+                  <th className="border-b-2 border-muted p-2 text-center align-bottom" rowSpan={2}>Contestant</th>
                   {mainGroups.map((main, mainIdx) => (
                     <th
                       key={main.id}
@@ -708,7 +709,9 @@ export default function JudgeScorePage() {
                       return (
                         <tr key={contestant.id} className={rowClass}>
                           <td className="border-b-2 border-muted p-1 font-mono whitespace-nowrap text-xs text-center">
-                            {event?.separateGenders && contestant.sex ? `${sexTag(contestant.sex)}-` : ''}#{contestant.number}
+                            <div className="font-semibold">{event?.separateGenders && contestant.sex ? `${sexTag(contestant.sex)}-` : ''}#{contestant.number}</div>
+                            <div className="text-[10px] leading-tight text-muted-foreground whitespace-normal">{contestant.name}</div>
+                            {contestant.grade && <div className="text-[10px] leading-tight text-muted-foreground/80 whitespace-normal italic">{contestant.grade}</div>}
                           </td>
                           {mainGroups.map((main, mainIdx) => (
                             main.subCriterias.map((sub, subIdx) => (
@@ -793,7 +796,9 @@ export default function JudgeScorePage() {
                       rows.push(
                         <tr key={contestant.id} className={rowClass}>
                           <td className="border-b-2 border-muted p-1 font-mono whitespace-nowrap text-xs text-center">
-                            {event?.separateGenders && contestant.sex ? `${sexTag(contestant.sex)}-` : ''}#{contestant.number}
+                            <div className="font-semibold">{event?.separateGenders && contestant.sex ? `${sexTag(contestant.sex)}-` : ''}#{contestant.number}</div>
+                            <div className="text-[10px] leading-tight text-muted-foreground whitespace-normal">{contestant.name}</div>
+                            {contestant.grade && <div className="text-[10px] leading-tight text-muted-foreground/80 whitespace-normal italic">{contestant.grade}</div>}
                           </td>
                           {mainGroups.map((main, mainIdx) => (
                             main.subCriterias.map((sub, subIdx) => (

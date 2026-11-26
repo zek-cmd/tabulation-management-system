@@ -66,7 +66,7 @@ export async function GET(req: Request) {
   });
 
   // Group and sum scores by contestant and judge
-  const grouped: Record<number, { contestantId: number; contestantName: string; contestantNumber: number; contestantSex: string; scores: { judgeId: number; judgeName: string; value: number }[] }> = {};
+  const grouped: Record<number, { contestantId: number; contestantName: string; contestantNumber: number; contestantSex: string; contestantGrade: string; scores: { judgeId: number; judgeName: string; value: number }[] }> = {};
   const sumMap: Record<number, Record<number, number>> = {};
   const judgeNames: Record<number, string> = {};
   for (const s of scores) {
@@ -80,11 +80,13 @@ export async function GET(req: Request) {
     const contestantName = contestant?.name || "";
     const contestantNumber = contestant?.number || 0;
     const contestantSex = contestant?.sex || "";
+    const contestantGrade = contestant?.grade || "";
     grouped[contestantId] = {
       contestantId: Number(contestantId),
       contestantName,
       contestantNumber,
       contestantSex,
+      contestantGrade,
       scores: Object.entries(sumMap[contestantId]).map(([judgeId, value]) => ({
         judgeId: Number(judgeId),
         judgeName: judgeNames[Number(judgeId)],

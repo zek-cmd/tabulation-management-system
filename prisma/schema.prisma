@@ -60,6 +60,7 @@ model Contestant {
   number  Int
   name    String
   sex     Sex?
+  grade   String? // Grade / course of the contestant (e.g. "BSIT - 3A")
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
   eventId Int
   scores  Score[]

@@ -17,6 +17,7 @@ interface Contestant {
   name: string;
   number?: number;
   sex?: string;
+  grade?: string;
 }
 
 interface Criteria {
@@ -51,7 +52,7 @@ export const ContestantBreakdownTable: React.FC<ContestantBreakdownTableProps> =
         setScores(data.scores);
         setContestants(
           data.contestants
-            .map((c: { id: number, name: string, number: number, sex?: string }) => ({ id: c.id, name: c.name, number: c.number, sex: c.sex }))
+            .map((c: { id: number, name: string, number: number, sex?: string, grade?: string }) => ({ id: c.id, name: c.name, number: c.number, sex: c.sex, grade: c.grade }))
         );
         setCriteria(data.criteria);
         setLoading(false);
@@ -168,7 +169,7 @@ export const ContestantBreakdownTable: React.FC<ContestantBreakdownTableProps> =
           <table className="min-w-full border text-sm">
             <thead>
               <tr>
-                <th className="border px-2 py-1" rowSpan={2}>No.</th>
+                <th className="border px-2 py-1" rowSpan={2}>Contestant</th>
                 {mainCriteria.map((criteria) => (
                   <th key={`header-${criteria.id}`} className="border px-2 py-1 text-center" colSpan={2}>
                     {criteria.name}
@@ -189,7 +190,11 @@ export const ContestantBreakdownTable: React.FC<ContestantBreakdownTableProps> =
             <tbody>
               {data.map((contestant, idx) => (
                 <tr key={contestant.id}>
-                  <td className="border px-2 py-1 text-center">{contestant.number || idx + 1}</td>
+                  <td className="border px-2 py-1 text-center">
+                    <div className="font-mono text-xs">{contestant.number || idx + 1}</div>
+                    <div className="text-[10px] leading-tight text-gray-600 whitespace-normal">{contestant.name}</div>
+                    {contestant.grade && <div className="text-[10px] leading-tight text-gray-500 whitespace-normal italic">{contestant.grade}</div>}
+                  </td>
                   {mainCriteria.flatMap((criteria) => {
                     const score = contestant.criteriaScores.find((cs) => cs.criteriaId === criteria.id)?.score ?? 0;
                     const rank = criteriaRanks[criteria.id][contestant.id] ?? '';

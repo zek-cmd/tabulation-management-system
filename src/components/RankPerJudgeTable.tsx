@@ -23,6 +23,7 @@ interface Contestant {
   name: string;
   number?: number;
   sex?: string;
+  grade?: string;
 }
 
 interface RankPerJudgeTableProps {
@@ -65,7 +66,7 @@ export const RankPerJudgeTable: React.FC<RankPerJudgeTableProps> = ({ eventId, p
         );
         setContestants(
           data.contestants
-            .map((c: { id: number, name: string, number: number, sex?: string }) => ({ id: c.id, name: c.name, number: c.number, sex: c.sex }))
+            .map((c: { id: number, name: string, number: number, sex?: string, grade?: string }) => ({ id: c.id, name: c.name, number: c.number, sex: c.sex, grade: c.grade }))
         );
         setCriteria(data.criteria);
         setLoading(false);
@@ -139,8 +140,8 @@ export const RankPerJudgeTable: React.FC<RankPerJudgeTableProps> = ({ eventId, p
   const filteredScores = scores.filter(s => eligibleContestantIds.has(s.contestantId));
 
   // For each contestant, sum their ranks across all judges
-  let contestantRows: { id: number; name: string; number: number; ranks: (number | string)[]; totalRank: number }[] | null;
-  let genderContestantRows: Map<string, { id: number; name: string; number: number; ranks: (number | string)[]; totalRank: number }[]> | null = null;
+  let contestantRows: { id: number; name: string; number: number; grade?: string; ranks: (number | string)[]; totalRank: number }[] | null;
+  let genderContestantRows: Map<string, { id: number; name: string; number: number; grade?: string; ranks: (number | string)[]; totalRank: number }[]> | null = null;
   
   if (eventSettings?.separateGenders) {
     // Separate by gender - calculate ranks within each gender group
@@ -160,6 +161,7 @@ export const RankPerJudgeTable: React.FC<RankPerJudgeTableProps> = ({ eventId, p
           id: c.id,
           name: c.name,
           number: c.number ?? 0,
+          grade: c.grade,
           ranks,
           totalRank,
         };
@@ -178,6 +180,7 @@ export const RankPerJudgeTable: React.FC<RankPerJudgeTableProps> = ({ eventId, p
         id: c.id,
         name: c.name,
         number: c.number ?? 0,
+        grade: c.grade,
         ranks,
         totalRank,
       };
@@ -245,7 +248,12 @@ export const RankPerJudgeTable: React.FC<RankPerJudgeTableProps> = ({ eventId, p
                 return (
                   <tr key={row.id} className={rowClass}>
                     <td className="border px-2 py-1 text-center">{row.number || idx + 1}</td>
-                    <td className="border px-2 py-1">{row.name}</td>
+                    <td className="border px-2 py-1">
+                      {row.name}
+                      {row.grade && (
+                        <div className="text-[10px] leading-tight text-gray-500 italic">{row.grade}</div>
+                      )}
+                    </td>
                     {row.ranks.map((r, i) => (
                       <td className="border px-2 py-1 text-center" key={i}>{typeof r === "number" ? r : ""}</td>
                     ))}

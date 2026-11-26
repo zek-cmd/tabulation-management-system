@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { number, name, sex, eventId } = await req.json();
+  const { number, name, sex, grade, eventId } = await req.json();
   if (!number || !name || !eventId) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
   }
@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
       number: Number(number),
       name,
       sex: sex || null,
+      grade: grade || null,
       eventId: Number(eventId),
     },
   });

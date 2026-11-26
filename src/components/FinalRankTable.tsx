@@ -25,6 +25,7 @@ interface Contestant {
   name: string;
   number?: number;
   sex?: string;
+  grade?: string;
 }
 
 interface FinalRankTableProps {
@@ -59,7 +60,7 @@ export const FinalRankTable: React.FC<FinalRankTableProps> = ({ eventId, phase =
         );
         setContestants(
           data.contestants
-            .map((c: { id: number, name: string, number: number, sex: string }) => ({ id: c.id, name: c.name, number: c.number, sex: c.sex }))
+            .map((c: { id: number, name: string, number: number, sex: string, grade?: string }) => ({ id: c.id, name: c.name, number: c.number, sex: c.sex, grade: c.grade }))
         );
         setCriteria(data.criteria);
         setLoading(false);
@@ -223,7 +224,12 @@ export const FinalRankTable: React.FC<FinalRankTableProps> = ({ eventId, phase =
               return (
                 <tr key={row.contestant.id} className={rowClass}>
                   <td className="border px-2 py-1 text-center">{row.contestant.number || idx + 1}</td>
-                  <td className="border px-2 py-1">{row.contestant.name}</td>
+                  <td className="border px-2 py-1">
+                    {row.contestant.name}
+                    {row.contestant.grade && (
+                      <div className="text-[10px] leading-tight text-gray-500 italic">{row.contestant.grade}</div>
+                    )}
+                  </td>
                   <td className="border px-2 py-1 text-center font-bold">{row.totalScore.toFixed(2)}</td>
                   <td className="border px-2 py-1 text-center font-bold">{row.totalRank}</td>
                   <td className="border px-2 py-1 text-center font-bold">{getOrdinalRank(row.finalRank!)}</td>

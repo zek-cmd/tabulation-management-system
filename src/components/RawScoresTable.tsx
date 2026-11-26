@@ -30,6 +30,7 @@ interface Contestant {
   number: number;
   name: string;
   sex?: string;
+  grade?: string;
 }
 
 interface Event {
@@ -109,7 +110,7 @@ export function RawScoresTable({ judgeId, eventId, tableClassName, phase }: { ju
         total += scoreMap[`${c.id}_${sub.id}`] || 0;
       });
     });
-    return { id: c.id, number: c.number, name: c.name, total, sex: c.sex };
+    return { id: c.id, number: c.number, name: c.name, total, sex: c.sex, grade: c.grade };
   });
   
   // Function to calculate ranks for a group of contestants
@@ -127,7 +128,7 @@ export function RawScoresTable({ judgeId, eventId, tableClassName, phase }: { ju
   };
   
   // Calculate ranks based on gender separation setting
-  let totalsWithRank: Array<{ id: number; number: number; name: string; total: number; sex?: string; rank: number }>;
+  let totalsWithRank: Array<{ id: number; number: number; name: string; total: number; sex?: string; grade?: string; rank: number }>;
   
   if (event?.separateGenders) {
     // Separate rankings by gender (Male, Female, Mix, then unset/other)
@@ -174,7 +175,7 @@ export function RawScoresTable({ judgeId, eventId, tableClassName, phase }: { ju
         <thead>
           <tr>
             <th className="border-b-2 border-muted p-2 text-center align-bottom" rowSpan={2}>
-              No.
+              Contestant
             </th>
             {mainGroups.map((main, mainIdx) => (
               <th
@@ -210,8 +211,16 @@ export function RawScoresTable({ judgeId, eventId, tableClassName, phase }: { ju
               // No gender separation - render all contestants
               return totalsWithRank.map((contestant) => (
                 <tr key={contestant.id}>
-                  <td className="border-b-2 border-muted p-1 font-mono whitespace-nowrap text-xs text-center">
-                    #{contestant.number}
+                  <td className="border-b-2 border-muted p-1 text-xs text-center">
+                    <div className="font-mono font-semibold">#{contestant.number}</div>
+                    <div className="text-[10px] leading-tight text-muted-foreground whitespace-normal max-w-[9rem] mx-auto">
+                      {contestant.name}
+                    </div>
+                    {contestant.grade && (
+                      <div className="text-[10px] leading-tight text-muted-foreground/80 whitespace-normal max-w-[9rem] mx-auto italic">
+                        {contestant.grade}
+                      </div>
+                    )}
                   </td>
                   {mainGroups.flatMap((main) =>
                     main.subCriterias.map((sub, subIdx) => (
@@ -254,8 +263,16 @@ export function RawScoresTable({ judgeId, eventId, tableClassName, phase }: { ju
                 // Contestant rows
                 ...contestants.map((contestant) => (
                   <tr key={contestant.id}>
-                    <td className="border-b-2 border-muted p-1 font-mono whitespace-nowrap text-xs text-center">
-                      #{contestant.number}
+                    <td className="border-b-2 border-muted p-1 text-xs text-center">
+                      <div className="font-mono font-semibold">#{contestant.number}</div>
+                      <div className="text-[10px] leading-tight text-muted-foreground whitespace-normal max-w-[9rem] mx-auto">
+                        {contestant.name}
+                      </div>
+                      {contestant.grade && (
+                        <div className="text-[10px] leading-tight text-muted-foreground/80 whitespace-normal max-w-[9rem] mx-auto italic">
+                          {contestant.grade}
+                        </div>
+                      )}
                     </td>
                     {mainGroups.flatMap((main) =>
                       main.subCriterias.map((sub, subIdx) => (

@@ -16,6 +16,7 @@ type Contestant = {
   number: number;
   name: string;
   sex?: string;
+  grade?: string;
 };
 
 type Event = {
@@ -50,6 +51,7 @@ export function ContestantsTab({ event }: ContestantsTabProps) {
   const [newContestantNumber, setNewContestantNumber] = useState("");
   const [newContestantName, setNewContestantName] = useState("");
   const [newContestantSex, setNewContestantSex] = useState("");
+  const [newContestantGrade, setNewContestantGrade] = useState("");
   const [addContestantError, setAddContestantError] = useState("");
 
   // Edit Contestant Dialog
@@ -58,6 +60,7 @@ export function ContestantsTab({ event }: ContestantsTabProps) {
   const [editContestantNumber, setEditContestantNumber] = useState("");
   const [editContestantName, setEditContestantName] = useState("");
   const [editContestantSex, setEditContestantSex] = useState("");
+  const [editContestantGrade, setEditContestantGrade] = useState("");
   const [editContestantError, setEditContestantError] = useState("");
 
   // Delete Contestant Dialog
@@ -95,6 +98,7 @@ export function ContestantsTab({ event }: ContestantsTabProps) {
         number: newContestantNumber,
         name: newContestantName,
         sex: newContestantSex,
+        grade: newContestantGrade,
         eventId: event.id
       }),
     });
@@ -104,6 +108,7 @@ export function ContestantsTab({ event }: ContestantsTabProps) {
       setNewContestantNumber((addedNumber + 1).toString());
       setNewContestantName("");
       setNewContestantSex("");
+      setNewContestantGrade("");
       setAddContestantError("");
       fetchContestants();
       toast.success("Contestant added successfully");
@@ -120,6 +125,7 @@ export function ContestantsTab({ event }: ContestantsTabProps) {
     setEditContestantNumber(contestant.number.toString());
     setEditContestantName(contestant.name);
     setEditContestantSex(contestant.sex || "");
+    setEditContestantGrade(contestant.grade || "");
     setEditContestantOpen(true);
   };
 
@@ -134,7 +140,8 @@ export function ContestantsTab({ event }: ContestantsTabProps) {
       body: JSON.stringify({
         number: editContestantNumber,
         name: editContestantName,
-        sex: editContestantSex
+        sex: editContestantSex,
+        grade: editContestantGrade
       }),
     });
 
@@ -180,11 +187,13 @@ export function ContestantsTab({ event }: ContestantsTabProps) {
               setNewContestantNumber(getNextContestantNumber().toString());
               setNewContestantName("");
               setNewContestantSex("");
+              setNewContestantGrade("");
               setAddContestantError("");
             } else {
               setNewContestantNumber("");
               setNewContestantName("");
               setNewContestantSex("");
+              setNewContestantGrade("");
               setAddContestantError("");
             }
           }}>
@@ -232,6 +241,13 @@ export function ContestantsTab({ event }: ContestantsTabProps) {
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Input
+                    placeholder="Grade / Course"
+                    value={newContestantGrade}
+                    onChange={e => setNewContestantGrade(e.target.value)}
+                  />
+                </div>
                 {addContestantError && (
                   <div className="text-destructive text-sm">{addContestantError}</div>
                 )}
@@ -275,6 +291,7 @@ export function ContestantsTab({ event }: ContestantsTabProps) {
                 <div>
                   <span className="font-semibold">#{contestant.number} {contestant.name}</span>
                   {contestant.sex && <span className="text-sm text-muted-foreground ml-2">({contestant.sex})</span>}
+                  {contestant.grade && <span className="text-sm text-muted-foreground ml-2">• {contestant.grade}</span>}
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -309,6 +326,7 @@ export function ContestantsTab({ event }: ContestantsTabProps) {
           setEditContestantNumber("");
           setEditContestantName("");
           setEditContestantSex("");
+          setEditContestantGrade("");
           setEditContestantError("");
         }
       }}>
@@ -348,6 +366,13 @@ export function ContestantsTab({ event }: ContestantsTabProps) {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Input
+                placeholder="Grade / Course"
+                value={editContestantGrade}
+                onChange={e => setEditContestantGrade(e.target.value)}
+              />
             </div>
             {editContestantError && (
               <div className="text-destructive text-sm">{editContestantError}</div>

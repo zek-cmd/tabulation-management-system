@@ -21,6 +21,7 @@ type Contestant = {
   number: number;
   name: string;
   sex?: string;
+  grade?: string;
 };
 
 type SubCriteria = {
@@ -255,7 +256,7 @@ export function TalentScoreSheet({ eventId, currentPhase = "PRELIMINARY", judges
                 <thead className="sticky top-0 bg-background z-10">
                   <tr>
                     <th className="border-b-2 border-muted p-2 text-center align-bottom bg-muted">
-                      Contestant #
+                      Contestant
                     </th>
                     {talentCriteria.subCriterias.map((sub, idx) => (
                       <th
@@ -296,7 +297,9 @@ export function TalentScoreSheet({ eventId, currentPhase = "PRELIMINARY", judges
                         return (
                           <tr key={contestant.id} className={rowClass}>
                             <td className="border-b-2 border-muted p-1 font-mono whitespace-nowrap text-xs text-center">
-                              {event?.separateGenders && contestant.sex ? `${sexTag(contestant.sex)}-` : ''}#{contestant.number}
+                              <div className="font-semibold">{event?.separateGenders && contestant.sex ? `${sexTag(contestant.sex)}-` : ''}#{contestant.number}</div>
+                            <div className="text-[10px] leading-tight text-muted-foreground whitespace-normal">{contestant.name}</div>
+                        {contestant.grade && <div className="text-[10px] leading-tight text-muted-foreground/80 whitespace-normal italic">{contestant.grade}</div>}
                             </td>
                             {talentCriteria.subCriterias.map((sub, idx) => (
                               <td
@@ -374,7 +377,9 @@ export function TalentScoreSheet({ eventId, currentPhase = "PRELIMINARY", judges
                         rows.push(
                           <tr key={contestant.id} className={rowClass}>
                             <td className="border-b-2 border-muted p-1 font-mono whitespace-nowrap text-xs text-center">
-                              {event?.separateGenders && contestant.sex ? `${sexTag(contestant.sex)}-` : ''}#{contestant.number}
+                              <div className="font-semibold">{event?.separateGenders && contestant.sex ? `${sexTag(contestant.sex)}-` : ''}#{contestant.number}</div>
+                            <div className="text-[10px] leading-tight text-muted-foreground whitespace-normal">{contestant.name}</div>
+                        {contestant.grade && <div className="text-[10px] leading-tight text-muted-foreground/80 whitespace-normal italic">{contestant.grade}</div>}
                             </td>
                             {talentCriteria.subCriterias.map((sub, idx) => (
                               <td

@@ -6,6 +6,7 @@ interface Contestant {
   contestantName: string;
   contestantNumber?: number;
   contestantSex?: string;
+  contestantGrade?: string;
   scores: Array<{ judgeId: number; judgeName: string; value: number }>;
 }
 
@@ -114,7 +115,7 @@ export function CategoryRankTable({ contestants, eventSettings }: CategoryRankTa
           <table className="min-w-full border text-sm">
             <thead>
               <tr>
-                <th className="border px-2 py-1" rowSpan={2}>No.</th>
+                <th className="border px-2 py-1" rowSpan={2}>Contestant</th>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <th className="border px-2 py-1 text-center" colSpan={2} key={`judge-header-${i}`}>{`Judge ${i + 1}`}</th>
                 ))}
@@ -137,7 +138,11 @@ export function CategoryRankTable({ contestants, eventSettings }: CategoryRankTa
                 else if (rank === 3) rowClass = "bg-orange-100 font-semibold";
                 return (
                   <tr key={c.contestantId} className={rowClass}>
-                    <td className="border px-2 py-1 text-center">{c.number}</td>
+                    <td className="border px-2 py-1 text-center">
+                      <div className="font-mono text-xs">{c.number}</div>
+                      <div className="text-[10px] leading-tight text-gray-600 whitespace-normal">{c.contestantName}</div>
+                      {c.contestantGrade && <div className="text-[10px] leading-tight text-gray-500 whitespace-normal italic">{c.contestantGrade}</div>}
+                    </td>
                   {judgeIds.map((judgeId, jIdx) => (
                     <React.Fragment key={`judge-${jIdx}`}>
                       <td className="border px-2 py-1 text-center">{(c.scores.find(s => s.judgeId === judgeId)?.value ?? 0)}</td>
