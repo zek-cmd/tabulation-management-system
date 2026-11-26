@@ -8,6 +8,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { getApiUrl } from "@/lib/api";
+import { GENDER_OPTIONS, sexSortOrder } from "@/lib/gender";
 import { Edit, Trash2, Plus, Users, X } from "lucide-react";
 
 type Contestant = {
@@ -225,8 +226,9 @@ export function ContestantsTab({ event }: ContestantsTabProps) {
                       <SelectValue placeholder="Select gender" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="MALE">Male</SelectItem>
-                      <SelectItem value="FEMALE">Female</SelectItem>
+                      {GENDER_OPTIONS.map(option => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -258,10 +260,9 @@ export function ContestantsTab({ event }: ContestantsTabProps) {
         ) : (
           <div className="space-y-2">
             {[...contestants].sort((a, b) => {
-              // Sort by sex first (MALE before FEMALE, undefined/null last)
-              const sexOrder = { MALE: 0, FEMALE: 1 };
-              const aSex = sexOrder[a.sex as keyof typeof sexOrder] ?? 2;
-              const bSex = sexOrder[b.sex as keyof typeof sexOrder] ?? 2;
+              // Sort by sex first (MALE, FEMALE, MIX, undefined/null last)
+              const aSex = sexSortOrder(a.sex);
+              const bSex = sexSortOrder(b.sex);
               
               if (aSex !== bSex) {
                 return aSex - bSex;
@@ -342,8 +343,9 @@ export function ContestantsTab({ event }: ContestantsTabProps) {
                   <SelectValue placeholder="Select gender" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MALE">Male</SelectItem>
-                  <SelectItem value="FEMALE">Female</SelectItem>
+                  {GENDER_OPTIONS.map(option => (
+                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

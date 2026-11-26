@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Toaster } from "sonner";
 import { getApiUrl } from "@/lib/api";
+import { GENDERS } from "@/lib/gender";
 import { RawScoresTable } from "@/components/RawScoresTable";
 import { ContestantsTab } from "@/components/ContestantsTab";
 import { JudgesTab } from "@/components/JudgesTab";
@@ -205,12 +206,10 @@ export default function EventDetailsPage() {
         let hasTies = false;
 
         if (event.separateGenders) {
-          // Check ties for each gender separately
-          const maleContestants = averages.filter(avg => avg.contestant.sex === 'MALE');
-          const femaleContestants = averages.filter(avg => avg.contestant.sex === 'FEMALE');
-          
-          hasTies = checkForTies(maleContestants, event.finalistsCount) || 
-                   checkForTies(femaleContestants, event.finalistsCount);
+          // Check ties for each gender group (Male, Female, Mix) separately
+          hasTies = GENDERS.some(gender =>
+            checkForTies(averages.filter(avg => avg.contestant.sex === gender), event.finalistsCount)
+          );
         } else {
           // Check ties for all contestants together
           hasTies = checkForTies(averages, event.finalistsCount);

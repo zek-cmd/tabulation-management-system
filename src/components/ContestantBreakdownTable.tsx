@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getApiUrl } from "@/lib/api";
+import { GENDER_GROUP_LABELS, GENDER_ORDER, genderKey } from "@/lib/gender";
 
 interface RawScore {
   contestantId: number;
@@ -114,20 +115,17 @@ export const ContestantBreakdownTable: React.FC<ContestantBreakdownTableProps> =
 
   // Create contestant data
   let contestantData;
-  let maleContestantData;
-  let femaleContestantData;
+  const genderContestantData = new Map<string, ReturnType<typeof createContestantData>>();
 
   if (eventSettings?.separateGenders) {
-    const maleContestants = eligibleContestants.filter(c => c.sex === "MALE");
-    const femaleContestants = eligibleContestants.filter(c => c.sex === "FEMALE");
-
-    maleContestantData = createContestantData(maleContestants);
-    femaleContestantData = createContestantData(femaleContestants);
+    for (const key of GENDER_ORDER) {
+      const group = eligibleContestants.filter(c => genderKey(c.sex) === key);
+      if (group.length === 0) continue;
+      genderContestantData.set(key, createContestantData(group));
+    }
     contestantData = null;
   } else {
     contestantData = createContestantData(eligibleContestants);
-    maleContestantData = null;
-    femaleContestantData = null;
   }
 
   // Helper function to render a breakdown table
@@ -217,8 +215,11 @@ export const ContestantBreakdownTable: React.FC<ContestantBreakdownTableProps> =
     <div>
       {eventSettings?.separateGenders ? (
         <>
-          {renderBreakdownTable(maleContestantData, "Male Contestants")}
-          {renderBreakdownTable(femaleContestantData, "Female Contestants")}
+          {GENDER_ORDER.map(key => {
+            const data = genderContestantData.get(key);
+            if (!data || data.length === 0) return null;
+            return <React.Fragment key={key}>{renderBreakdownTable(data, GENDER_GROUP_LABELS[key])}</React.Fragment>;
+          })}
         </>
       ) : (
         renderBreakdownTable(contestantData)

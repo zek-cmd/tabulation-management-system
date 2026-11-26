@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import { getApiUrl } from "@/lib/api";
+import { GENDER_GROUP_LABELS, GENDER_ORDER, genderKey } from "@/lib/gender";
 interface RawScore {
   contestantId: number;
   contestantName: string;
@@ -129,20 +130,15 @@ export function RawScoresTable({ judgeId, eventId, tableClassName, phase }: { ju
   let totalsWithRank: Array<{ id: number; number: number; name: string; total: number; sex?: string; rank: number }>;
   
   if (event?.separateGenders) {
-    // Separate rankings by gender
-    const maleContestants = totals.filter(c => c.sex === 'MALE');
-    const femaleContestants = totals.filter(c => c.sex === 'FEMALE');
-    const otherContestants = totals.filter(c => !c.sex || (c.sex !== 'MALE' && c.sex !== 'FEMALE'));
-    
-    const maleRanks = calculateRanks(maleContestants);
-    const femaleRanks = calculateRanks(femaleContestants);
-    const otherRanks = calculateRanks(otherContestants);
-    
+    // Separate rankings by gender (Male, Female, Mix, then unset/other)
+    const groupRanks = new Map<string, Map<number, number>>();
+    for (const key of GENDER_ORDER) {
+      groupRanks.set(key, calculateRanks(totals.filter(c => genderKey(c.sex) === key)));
+    }
+
     totalsWithRank = totals.map((c) => ({
       ...c,
-      rank: (c.sex === 'MALE' ? maleRanks.get(c.id) :
-             c.sex === 'FEMALE' ? femaleRanks.get(c.id) :
-             otherRanks.get(c.id)) ?? 0
+      rank: groupRanks.get(genderKey(c.sex))?.get(c.id) ?? 0
     }));
   } else {
     // Unified ranking
@@ -242,10 +238,6 @@ export function RawScoresTable({ judgeId, eventId, tableClassName, phase }: { ju
             }
             
             // Gender separation enabled - group contestants by gender
-            const maleContestants = totalsWithRank.filter(c => c.sex === 'MALE');
-            const femaleContestants = totalsWithRank.filter(c => c.sex === 'FEMALE');
-            const otherContestants = totalsWithRank.filter(c => !c.sex || (c.sex !== 'MALE' && c.sex !== 'FEMALE'));
-            
             const renderGenderGroup = (contestants: typeof totalsWithRank, label: string) => {
               if (contestants.length === 0) return null;
               
@@ -290,11 +282,12 @@ export function RawScoresTable({ judgeId, eventId, tableClassName, phase }: { ju
               ];
             };
             
-            return [
-              ...(renderGenderGroup(maleContestants, 'Male Contestants') || []),
-              ...(renderGenderGroup(femaleContestants, 'Female Contestants') || []),
-              ...(renderGenderGroup(otherContestants, 'Other Contestants') || [])
-            ];
+            return GENDER_ORDER.flatMap(key =>
+              renderGenderGroup(
+                totalsWithRank.filter(c => genderKey(c.sex) === key),
+                GENDER_GROUP_LABELS[key]
+              ) || []
+            );
           })()}
         </tbody>
       </table>

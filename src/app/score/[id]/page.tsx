@@ -1,5 +1,6 @@
 "use client";
 import { getApiUrl } from "@/lib/api";
+import { GENDERS, GENDER_GROUP_LABELS, GENDER_ORDER, genderKey, sexRowClass, sexSortOrder, sexTag } from "@/lib/gender";
 
 import "../score-shake.css";
 
@@ -177,15 +178,17 @@ export default function JudgeScorePage() {
       };
 
       if (separateGenders) {
-        // Separate by gender
-        const maleContestants = averages.filter(avg => avg.contestant.sex === 'MALE');
-        const femaleContestants = averages.filter(avg => avg.contestant.sex === 'FEMALE');
+        // Separate by gender (Male, Female and Mix are judged as separate groups)
+        const genderFinalists: Contestant[] = [];
 
-        // Get finalists for each gender using the specified strategy
-        const topMales = await getFinalistsWithStrategy(maleContestants, finalistsCount, tieBreakingStrategy);
-        const topFemales = await getFinalistsWithStrategy(femaleContestants, finalistsCount, tieBreakingStrategy);
+        for (const gender of GENDERS) {
+          const group = averages.filter(avg => avg.contestant.sex === gender);
+          if (group.length === 0) continue;
+          // Get finalists for each gender using the specified strategy
+          genderFinalists.push(...await getFinalistsWithStrategy(group, finalistsCount, tieBreakingStrategy));
+        }
 
-        return [...topMales, ...topFemales];
+        return genderFinalists;
       } else {
         // Overall top finalists with strategy-based tie handling
         return await getFinalistsWithStrategy(averages, finalistsCount, tieBreakingStrategy);
@@ -675,10 +678,9 @@ export default function JudgeScorePage() {
                 {(() => {
                   // Group contestants by gender if separateGenders is enabled
                   const sortedContestants = [...filteredContestants].sort((a, b) => {
-                    // Sort by sex first (MALE before FEMALE, undefined/null last)
-                    const sexOrder = { MALE: 0, FEMALE: 1 };
-                    const aSex = sexOrder[a.sex as keyof typeof sexOrder] ?? 2;
-                    const bSex = sexOrder[b.sex as keyof typeof sexOrder] ?? 2;
+                    // Sort by sex first (MALE, FEMALE, MIX, undefined/null last)
+                    const aSex = sexSortOrder(a.sex);
+                    const bSex = sexSortOrder(b.sex);
 
                     if (aSex !== bSex) {
                       return aSex - bSex;
@@ -701,16 +703,12 @@ export default function JudgeScorePage() {
                       });
 
                       // Determine row background based on gender
-                      const rowClass = contestant.sex === 'MALE'
-                        ? 'bg-blue-50 dark:bg-blue-950/20'
-                        : contestant.sex === 'FEMALE'
-                          ? 'bg-pink-50 dark:bg-pink-950/20'
-                          : '';
+                      const rowClass = sexRowClass(contestant.sex);
 
                       return (
                         <tr key={contestant.id} className={rowClass}>
                           <td className="border-b-2 border-muted p-1 font-mono whitespace-nowrap text-xs text-center">
-                            {event?.separateGenders && contestant.sex ? `${contestant.sex.charAt(0)}-` : ''}#{contestant.number}
+                            {event?.separateGenders && contestant.sex ? `${sexTag(contestant.sex)}-` : ''}#{contestant.number}
                           </td>
                           {mainGroups.map((main, mainIdx) => (
                             main.subCriterias.map((sub, subIdx) => (
@@ -751,14 +749,14 @@ export default function JudgeScorePage() {
 
                   // Group by gender and render with headers
                   const genderGroups = sortedContestants.reduce((groups, contestant) => {
-                    const gender = contestant.sex || 'OTHER';
+                    const gender = genderKey(contestant.sex);
                     if (!groups[gender]) groups[gender] = [];
                     groups[gender].push(contestant);
                     return groups;
                   }, {} as Record<string, typeof sortedContestants>);
 
-                  const genderOrder = ['MALE', 'FEMALE', 'OTHER'];
-                  const genderLabels = { MALE: 'Male Contestants', FEMALE: 'Female Contestants', OTHER: 'Other Contestants' };
+                  const genderOrder = GENDER_ORDER;
+                  const genderLabels = GENDER_GROUP_LABELS;
 
                   return genderOrder.flatMap(gender => {
                     const contestants = genderGroups[gender] || [];
@@ -790,16 +788,12 @@ export default function JudgeScorePage() {
                       });
 
                       // Determine row background based on gender
-                      const rowClass = contestant.sex === 'MALE'
-                        ? 'bg-blue-50 dark:bg-blue-950/20'
-                        : contestant.sex === 'FEMALE'
-                          ? 'bg-pink-50 dark:bg-pink-950/20'
-                          : '';
+                      const rowClass = sexRowClass(contestant.sex);
 
                       rows.push(
                         <tr key={contestant.id} className={rowClass}>
                           <td className="border-b-2 border-muted p-1 font-mono whitespace-nowrap text-xs text-center">
-                            {event?.separateGenders && contestant.sex ? `${contestant.sex.charAt(0)}-` : ''}#{contestant.number}
+                            {event?.separateGenders && contestant.sex ? `${sexTag(contestant.sex)}-` : ''}#{contestant.number}
                           </td>
                           {mainGroups.map((main, mainIdx) => (
                             main.subCriterias.map((sub, subIdx) => (

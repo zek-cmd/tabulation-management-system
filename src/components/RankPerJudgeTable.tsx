@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getApiUrl } from "@/lib/api";
+import { GENDER_GROUP_LABELS, GENDER_ORDER, genderKey } from "@/lib/gender";
 
 interface RawScore {
   contestantId: number;
@@ -138,46 +139,33 @@ export const RankPerJudgeTable: React.FC<RankPerJudgeTableProps> = ({ eventId, p
   const filteredScores = scores.filter(s => eligibleContestantIds.has(s.contestantId));
 
   // For each contestant, sum their ranks across all judges
-  let contestantRows;
-  let maleContestantRows;
-  let femaleContestantRows;
+  let contestantRows: { id: number; name: string; number: number; ranks: (number | string)[]; totalRank: number }[] | null;
+  let genderContestantRows: Map<string, { id: number; name: string; number: number; ranks: (number | string)[]; totalRank: number }[]> | null = null;
   
   if (eventSettings?.separateGenders) {
     // Separate by gender - calculate ranks within each gender group
-    const maleContestants = eligibleContestants.filter(c => c.sex === "MALE");
-    const femaleContestants = eligibleContestants.filter(c => c.sex === "FEMALE");
-    
-    const maleScores = filteredScores.filter(s => maleContestants.some(mc => mc.id === s.contestantId));
-    const femaleScores = filteredScores.filter(s => femaleContestants.some(fc => fc.id === s.contestantId));
-    
-    // Calculate rankings separately for each gender
-    const maleRankings = calculateRankings(maleContestants, maleScores, judges, criteria);
-    const femaleRankings = calculateRankings(femaleContestants, femaleScores, judges, criteria);
-    
-    maleContestantRows = maleContestants.map((c) => {
-      const ranks = judges.map((j) => maleRankings[j.id]?.[c.id] ?? "");
-      const totalRank = ranks.reduce((sum, r) => sum + (typeof r === "number" ? r : 0), 0);
-      return {
-        id: c.id,
-        name: c.name,
-        number: c.number ?? 0,
-        ranks,
-        totalRank,
-      };
-    });
-    
-    femaleContestantRows = femaleContestants.map((c) => {
-      const ranks = judges.map((j) => femaleRankings[j.id]?.[c.id] ?? "");
-      const totalRank = ranks.reduce((sum, r) => sum + (typeof r === "number" ? r : 0), 0);
-      return {
-        id: c.id,
-        name: c.name,
-        number: c.number ?? 0,
-        ranks,
-        totalRank,
-      };
-    });
-    
+    genderContestantRows = new Map();
+
+    for (const key of GENDER_ORDER) {
+      const groupContestants = eligibleContestants.filter(c => genderKey(c.sex) === key);
+      if (groupContestants.length === 0) continue;
+
+      const groupScores = filteredScores.filter(s => groupContestants.some(gc => gc.id === s.contestantId));
+      const groupRankings = calculateRankings(groupContestants, groupScores, judges, criteria);
+
+      genderContestantRows.set(key, groupContestants.map((c) => {
+        const ranks = judges.map((j) => groupRankings[j.id]?.[c.id] ?? "");
+        const totalRank = ranks.reduce((sum, r) => sum + (typeof r === "number" ? r : 0), 0);
+        return {
+          id: c.id,
+          name: c.name,
+          number: c.number ?? 0,
+          ranks,
+          totalRank,
+        };
+      }));
+    }
+
     contestantRows = null;
   } else {
     // Unified - calculate ranks for all contestants together
@@ -194,8 +182,7 @@ export const RankPerJudgeTable: React.FC<RankPerJudgeTableProps> = ({ eventId, p
         totalRank,
       };
     });
-    maleContestantRows = null;
-    femaleContestantRows = null;
+    genderContestantRows = null;
   }
 
   // Helper function to render a ranking table
@@ -278,8 +265,11 @@ export const RankPerJudgeTable: React.FC<RankPerJudgeTableProps> = ({ eventId, p
     <div>
       {eventSettings?.separateGenders ? (
         <>
-          {renderRankingTable(maleContestantRows, "Male Contestants")}
-          {renderRankingTable(femaleContestantRows, "Female Contestants")}
+          {GENDER_ORDER.map(key => {
+            const rows = genderContestantRows?.get(key);
+            if (!rows || rows.length === 0) return null;
+            return <React.Fragment key={key}>{renderRankingTable(rows, GENDER_GROUP_LABELS[key])}</React.Fragment>;
+          })}
         </>
       ) : (
         renderRankingTable(contestantRows)

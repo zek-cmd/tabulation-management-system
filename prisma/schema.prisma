@@ -39,6 +39,7 @@ enum EventStatus {
 enum Sex {
   MALE
   FEMALE
+  MIX
 }
 
 enum Phase {

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getApiUrl } from "@/lib/api";
+import { genderKey, GENDER_GROUP_LABELS, GENDER_ORDER } from "@/lib/gender";
 
 interface RawScore {
   contestantId: number;
@@ -172,26 +173,21 @@ export const FinalRankTable: React.FC<FinalRankTableProps> = ({ eventId, phase =
   
   // Calculate rankings
   let rankings;
-  let maleRankings;
-  let femaleRankings;
+  let genderRankings: Map<string, ReturnType<typeof calculateRankings>> | null = null;
   
   if (eventSettings?.separateGenders) {
-    // Separate rankings by gender
-    const maleContestants = eligibleContestants.filter(c => c.sex === "MALE");
-    const femaleContestants = eligibleContestants.filter(c => c.sex === "FEMALE");
-    
-    // Filter scores by gender as well
-    const maleScores = filteredScores.filter(s => maleContestants.some(mc => mc.id === s.contestantId));
-    const femaleScores = filteredScores.filter(s => femaleContestants.some(fc => fc.id === s.contestantId));
-    
-    maleRankings = calculateRankings(maleContestants, maleScores, judges, criteria);
-    femaleRankings = calculateRankings(femaleContestants, femaleScores, judges, criteria);
+    // Separate rankings by gender (Male, Female, Mix, then unset/other)
+    genderRankings = new Map();
+    for (const key of GENDER_ORDER) {
+      const groupContestants = eligibleContestants.filter(c => genderKey(c.sex) === key);
+      const groupScores = filteredScores.filter(s => groupContestants.some(gc => gc.id === s.contestantId));
+      genderRankings.set(key, calculateRankings(groupContestants, groupScores, judges, criteria));
+    }
     rankings = null; // We'll render separate tables
   } else {
     // Unified rankings
     rankings = calculateRankings(eligibleContestants, filteredScores, judges, criteria);
-    maleRankings = null;
-    femaleRankings = null;
+    genderRankings = null;
   }
 
   // Helper function to render ordinal rank
@@ -244,8 +240,11 @@ export const FinalRankTable: React.FC<FinalRankTableProps> = ({ eventId, phase =
     <div>
       {eventSettings?.separateGenders ? (
         <>
-          {renderRankingTable(maleRankings, "Male Contestants")}
-          {renderRankingTable(femaleRankings, "Female Contestants")}
+          {GENDER_ORDER.map(key => {
+            const rows = genderRankings?.get(key);
+            if (!rows || rows.length === 0) return null;
+            return <React.Fragment key={key}>{renderRankingTable(rows, GENDER_GROUP_LABELS[key])}</React.Fragment>;
+          })}
         </>
       ) : (
         renderRankingTable(rankings)

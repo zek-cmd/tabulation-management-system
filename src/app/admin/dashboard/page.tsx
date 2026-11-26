@@ -830,7 +830,7 @@ export default function AdminDashboard() {
                         onCheckedChange={setNewSeparateGenders}
                       />
                       <label htmlFor="separate-genders" className="text-sm font-medium">
-                        Separate judging by gender (Male/Female)
+                        Separate judging by gender (Male/Female/Mix)
                       </label>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -1021,7 +1021,7 @@ export default function AdminDashboard() {
                                     onCheckedChange={setEditSeparateGenders}
                                   />
                                   <label htmlFor={`edit-separate-genders-${event.id}`} className="text-sm font-medium">
-                                    Separate judging by gender (Male/Female)
+                                    Separate judging by gender (Male/Female/Mix)
                                   </label>
                                 </div>
                                 <div className="flex items-center space-x-2">

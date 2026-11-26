@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { getApiUrl } from "@/lib/api";
+import { GENDER_GROUP_LABELS, GENDER_ORDER, genderKey, sexRowClass, sexSortOrder, sexTag } from "@/lib/gender";
 import { Music } from "lucide-react";
 
 type Judge = {
@@ -276,9 +277,8 @@ export function TalentScoreSheet({ eventId, currentPhase = "PRELIMINARY", judges
                   {(() => {
                     // Sort contestants by gender first (if separate genders), then by number
                     const sortedContestants = [...contestants].sort((a, b) => {
-                      const sexOrder = { MALE: 0, FEMALE: 1 };
-                      const aSex = sexOrder[a.sex as keyof typeof sexOrder] ?? 2;
-                      const bSex = sexOrder[b.sex as keyof typeof sexOrder] ?? 2;
+                      const aSex = sexSortOrder(a.sex);
+                      const bSex = sexSortOrder(b.sex);
 
                       if (aSex !== bSex) {
                         return aSex - bSex;
@@ -291,16 +291,12 @@ export function TalentScoreSheet({ eventId, currentPhase = "PRELIMINARY", judges
                       // Render without gender grouping
                       return sortedContestants.map((contestant) => {
                         // Determine row background based on gender
-                        const rowClass = contestant.sex === "MALE"
-                          ? "bg-blue-50 dark:bg-blue-950/20"
-                          : contestant.sex === "FEMALE"
-                          ? "bg-pink-50 dark:bg-pink-950/20"
-                          : "";
+                        const rowClass = sexRowClass(contestant.sex);
 
                         return (
                           <tr key={contestant.id} className={rowClass}>
                             <td className="border-b-2 border-muted p-1 font-mono whitespace-nowrap text-xs text-center">
-                              {event?.separateGenders && contestant.sex ? `${contestant.sex.charAt(0)}-` : ''}#{contestant.number}
+                              {event?.separateGenders && contestant.sex ? `${sexTag(contestant.sex)}-` : ''}#{contestant.number}
                             </td>
                             {talentCriteria.subCriterias.map((sub, idx) => (
                               <td
@@ -339,14 +335,14 @@ export function TalentScoreSheet({ eventId, currentPhase = "PRELIMINARY", judges
 
                     // Group by gender and render with headers
                     const genderGroups = sortedContestants.reduce((groups, contestant) => {
-                      const gender = contestant.sex || 'OTHER';
+                      const gender = genderKey(contestant.sex);
                       if (!groups[gender]) groups[gender] = [];
                       groups[gender].push(contestant);
                       return groups;
                     }, {} as Record<string, typeof sortedContestants>);
 
-                    const genderOrder = ['MALE', 'FEMALE', 'OTHER'];
-                    const genderLabels = { MALE: 'Male Contestants', FEMALE: 'Female Contestants', OTHER: 'Other Contestants' };
+                    const genderOrder = GENDER_ORDER;
+                    const genderLabels = GENDER_GROUP_LABELS;
 
                     return genderOrder.flatMap(gender => {
                       const genderContestants = genderGroups[gender] || [];
@@ -378,7 +374,7 @@ export function TalentScoreSheet({ eventId, currentPhase = "PRELIMINARY", judges
                         rows.push(
                           <tr key={contestant.id} className={rowClass}>
                             <td className="border-b-2 border-muted p-1 font-mono whitespace-nowrap text-xs text-center">
-                              {event?.separateGenders && contestant.sex ? `${contestant.sex.charAt(0)}-` : ''}#{contestant.number}
+                              {event?.separateGenders && contestant.sex ? `${sexTag(contestant.sex)}-` : ''}#{contestant.number}
                             </td>
                             {talentCriteria.subCriterias.map((sub, idx) => (
                               <td

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 // Card components removed as they're no longer used
 import { getApiUrl } from "@/lib/api";
+import { GENDERS, GENDER_GROUP_LABELS, GENDER_ORDER, genderKey } from "@/lib/gender";
 import { toast } from "sonner";
 import { Trophy, CheckCircle2 } from "lucide-react";
 
@@ -87,11 +88,7 @@ export function FinalistSelectionTab({ event, onSuccess }: FinalistSelectionTabP
         }));
 
         if (event.separateGenders) {
-          // Handle gender separation - calculate ranks and selection per gender
-          const maleContestants = contestantsWithScores.filter(c => c.contestant.sex === 'MALE');
-          const femaleContestants = contestantsWithScores.filter(c => c.contestant.sex === 'FEMALE');
-
-          // Sort and rank each gender group separately
+          // Handle gender separation - calculate ranks and selection per gender group
           const processGenderGroup = (contestants: ContestantWithScore[]) => {
             contestants.sort((a, b) => b.averageScore - a.averageScore);
             let currentRank = 1;
@@ -104,14 +101,7 @@ export function FinalistSelectionTab({ event, onSuccess }: FinalistSelectionTabP
             return contestants;
           };
 
-          const rankedMales = processGenderGroup(maleContestants);
-          const rankedFemales = processGenderGroup(femaleContestants);
-
-          // Combine all contestants with proper ranks
-          const allRanked = [...rankedMales, ...rankedFemales];
-          setContestants(allRanked);
-
-          // Find ties for each gender separately
+          const allRanked: ContestantWithScore[] = [];
           const allTied: ContestantWithScore[] = [];
           const autoSelected: number[] = [];
 
@@ -135,9 +125,15 @@ export function FinalistSelectionTab({ event, onSuccess }: FinalistSelectionTabP
             }
           };
 
-          processGenderTies(rankedMales);
-          processGenderTies(rankedFemales);
+          // Male, Female and Mix are each ranked and selected separately
+          for (const gender of GENDERS) {
+            const group = processGenderGroup(contestantsWithScores.filter(c => c.contestant.sex === gender));
+            if (group.length === 0) continue;
+            allRanked.push(...group);
+            processGenderTies(group);
+          }
 
+          setContestants(allRanked);
           setTiedContestants(allTied);
           setSelectedFinalists(autoSelected);
 
@@ -258,16 +254,17 @@ export function FinalistSelectionTab({ event, onSuccess }: FinalistSelectionTabP
     if (event.separateGenders) {
       // Validate gender separation: each gender should have exactly finalistsCount selections
       const selectedContestants = contestants.filter(c => selectedFinalists.includes(c.contestant.id));
-      const maleSelections = selectedContestants.filter(c => c.contestant.sex === 'MALE');
-      const femaleSelections = selectedContestants.filter(c => c.contestant.sex === 'FEMALE');
+      const genderCounts = GENDERS.map(gender => ({
+        gender,
+        label: GENDER_GROUP_LABELS[gender].replace(" Contestants", "").toLowerCase(),
+        count: selectedContestants.filter(c => c.contestant.sex === gender).length,
+      }));
 
-      if (maleSelections.length !== event.finalistsCount) {
-        toast.error(`Please select exactly ${event.finalistsCount} male finalists (currently: ${maleSelections.length})`);
-        return;
-      }
-      if (femaleSelections.length !== event.finalistsCount) {
-        toast.error(`Please select exactly ${event.finalistsCount} female finalists (currently: ${femaleSelections.length})`);
-        return;
+      for (const group of genderCounts) {
+        if (group.count !== event.finalistsCount) {
+          toast.error(`Please select exactly ${event.finalistsCount} ${group.label} finalists (currently: ${group.count})`);
+          return;
+        }
       }
     } else {
       // Original validation for non-gender-separated events
@@ -350,9 +347,12 @@ export function FinalistSelectionTab({ event, onSuccess }: FinalistSelectionTabP
               <div className="text-sm text-gray-600">
                 {(() => {
                   const selectedContestants = contestants.filter(c => selectedFinalists.includes(c.contestant.id));
-                  const maleCount = selectedContestants.filter(c => c.contestant.sex === 'MALE').length;
-                  const femaleCount = selectedContestants.filter(c => c.contestant.sex === 'FEMALE').length;
-                  return `(Male: ${maleCount}/${event.finalistsCount}, Female: ${femaleCount}/${event.finalistsCount})`;
+                  const genderCounts = GENDERS.map(gender => {
+                    const label = GENDER_GROUP_LABELS[gender].replace(" Contestants", "");
+                    const count = selectedContestants.filter(c => c.contestant.sex === gender).length;
+                    return `${label}: ${count}/${event.finalistsCount}`;
+                  });
+                  return `(${genderCounts.join(", ")})`;
                 })()}
               </div>
             ) : (
@@ -367,11 +367,11 @@ export function FinalistSelectionTab({ event, onSuccess }: FinalistSelectionTabP
               if (saving) return true;
               
               if (event.separateGenders) {
-                // For gender-separated events, check if both genders have correct counts
+                // For gender-separated events, every gender group must be complete
                 const selectedContestants = contestants.filter(c => selectedFinalists.includes(c.contestant.id));
-                const maleCount = selectedContestants.filter(c => c.contestant.sex === 'MALE').length;
-                const femaleCount = selectedContestants.filter(c => c.contestant.sex === 'FEMALE').length;
-                return maleCount !== event.finalistsCount || femaleCount !== event.finalistsCount;
+                return GENDERS.some(gender =>
+                  selectedContestants.filter(c => c.contestant.sex === gender).length !== event.finalistsCount
+                );
               } else {
                 // For non-gender-separated events, use original logic
                 return selectedFinalists.length !== event.finalistsCount;
@@ -389,12 +389,14 @@ export function FinalistSelectionTab({ event, onSuccess }: FinalistSelectionTabP
               <div className="text-yellow-800">
                 <strong>Ties detected:</strong> Select finalists from tied contestants for each gender.
                 {(() => {
-                  const maleTied = tiedContestants.filter(c => c.contestant.sex === 'MALE');
-                  const femaleTied = tiedContestants.filter(c => c.contestant.sex === 'FEMALE');
+                  const tiedByGender = GENDERS
+                    .map(gender => ({ gender, tied: tiedContestants.filter(c => c.contestant.sex === gender) }))
+                    .filter(group => group.tied.length > 0);
                   return (
                     <div className="mt-1">
-                      {maleTied.length > 0 && <div>• Male contestants tied at rank {maleTied[0].rank}</div>}
-                      {femaleTied.length > 0 && <div>• Female contestants tied at rank {femaleTied[0].rank}</div>}
+                      {tiedByGender.map(({ gender, tied }) => (
+                        <div key={gender}>{GENDER_GROUP_LABELS[gender].replace(" Contestants", "")} contestants tied at rank {tied[0].rank}</div>
+                      ))}
                     </div>
                   );
                 })()}
@@ -412,15 +414,13 @@ export function FinalistSelectionTab({ event, onSuccess }: FinalistSelectionTabP
         {event.separateGenders ? (
           // Render contestants grouped by gender
           <div className="space-y-4">
-            {[
-              { gender: 'MALE', label: 'Male Contestants', contestants: contestants.filter(c => c.contestant.sex === 'MALE') },
-              { gender: 'FEMALE', label: 'Female Contestants', contestants: contestants.filter(c => c.contestant.sex === 'FEMALE') }
-            ].map(({ gender, label, contestants: genderContestants }) => (
-              genderContestants.length > 0 && (
-                <div key={gender}>
+            {GENDER_ORDER.map(key => ({ key, label: GENDER_GROUP_LABELS[key], group: contestants.filter(c => genderKey(c.contestant.sex) === key) }))
+              .filter(({ group }) => group.length > 0)
+              .map(({ key, label, group }) => (
+                <div key={key}>
                   <h3 className="font-semibold text-sm mb-2 text-gray-700 border-b pb-1">{label}</h3>
                   <div className="space-y-1">
-                    {genderContestants.map((contestant) => {
+                    {group.map((contestant) => {
                       const status = getContestantStatus(contestant);
                       const isTied = tiedContestants.some(tc => tc.contestant.id === contestant.contestant.id);
                       const isSelected = selectedFinalists.includes(contestant.contestant.id);
@@ -459,8 +459,7 @@ export function FinalistSelectionTab({ event, onSuccess }: FinalistSelectionTabP
                     })}
                   </div>
                 </div>
-              )
-            ))}
+              ))}
           </div>
         ) : (
           // Original single list for non-gender-separated events

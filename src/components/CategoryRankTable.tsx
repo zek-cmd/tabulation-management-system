@@ -1,4 +1,5 @@
 import React from "react";
+import { GENDER_GROUP_LABELS, GENDER_ORDER, genderKey } from "@/lib/gender";
 
 interface Contestant {
   contestantId: number;
@@ -163,13 +164,13 @@ export function CategoryRankTable({ contestants, eventSettings }: CategoryRankTa
   };
 
   if (eventSettings?.separateGenders) {
-    const maleContestants = contestants.filter(c => c.contestantSex === "MALE");
-    const femaleContestants = contestants.filter(c => c.contestantSex === "FEMALE");
-    
     return (
       <div>
-        {renderRankingTable(maleContestants, "Male Contestants")}
-        {renderRankingTable(femaleContestants, "Female Contestants")}
+        {GENDER_ORDER.map(key => {
+          const group = contestants.filter(c => genderKey(c.contestantSex) === key);
+          if (group.length === 0) return null;
+          return <React.Fragment key={key}>{renderRankingTable(group, GENDER_GROUP_LABELS[key])}</React.Fragment>;
+        })}
       </div>
     );
   } else {

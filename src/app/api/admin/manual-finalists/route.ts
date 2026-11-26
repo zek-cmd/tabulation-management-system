@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { GENDERS } from "@/lib/gender";
 
 const prisma = new PrismaClient();
 
@@ -54,26 +55,34 @@ export async function POST(request: Request) {
 
     // Validate selection based on gender separation
     if (event.separateGenders) {
-      // For gender-separated events, each gender should have exactly finalistsCount selections
-      const maleContestants = contestants.filter(c => c.sex === 'MALE');
-      const femaleContestants = contestants.filter(c => c.sex === 'FEMALE');
+      // For gender-separated events, each gender group (Male, Female, Mix) needs exactly finalistsCount selections
+      const selectedIds = new Set(contestantIds);
+      const expectedGroups = GENDERS.filter(gender =>
+        contestants.some(c => c.sex === gender)
+      );
 
-      if (maleContestants.length !== event.finalistsCount) {
-        return NextResponse.json({ 
-          error: `Must select exactly ${event.finalistsCount} male finalists (received ${maleContestants.length})` 
+      // Contestants without a known gender cannot be placed in a group
+      const ungrouped = contestants.filter(c => !(GENDERS as readonly string[]).includes(c.sex ?? ''));
+      if (ungrouped.length > 0) {
+        return NextResponse.json({
+          error: `Assign a gender (Male, Female or Mix) to contestant(s): ${ungrouped.length} without one`
         }, { status: 400 });
       }
 
-      if (femaleContestants.length !== event.finalistsCount) {
-        return NextResponse.json({ 
-          error: `Must select exactly ${event.finalistsCount} female finalists (received ${femaleContestants.length})` 
-        }, { status: 400 });
+      for (const gender of expectedGroups) {
+        const groupCount = contestants.filter(c => c.sex === gender && selectedIds.has(c.id)).length;
+        if (groupCount !== event.finalistsCount) {
+          const label = gender.charAt(0) + gender.slice(1).toLowerCase();
+          return NextResponse.json({
+            error: `Must select exactly ${event.finalistsCount} ${label} finalists (received ${groupCount})`
+          }, { status: 400 });
+        }
       }
 
-      // Total should be 2 * finalistsCount for gender-separated events
-      if (contestantIds.length !== event.finalistsCount * 2) {
-        return NextResponse.json({ 
-          error: `Must select exactly ${event.finalistsCount * 2} finalists total for gender-separated events` 
+      // Total should be finalistsCount per gender group present
+      if (contestantIds.length !== event.finalistsCount * expectedGroups.length) {
+        return NextResponse.json({
+          error: `Must select exactly ${event.finalistsCount * expectedGroups.length} finalists total for gender-separated events`
         }, { status: 400 });
       }
     } else {
