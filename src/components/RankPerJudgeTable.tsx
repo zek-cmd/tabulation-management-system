@@ -248,10 +248,10 @@ export const RankPerJudgeTable: React.FC<RankPerJudgeTableProps> = ({ eventId, p
                 return (
                   <tr key={row.id} className={rowClass}>
                     <td className="border px-2 py-1 text-center">{row.number || idx + 1}</td>
-                    <td className="border px-2 py-1">
+                    <td className="border px-2 py-1 text-sm leading-snug">
                       {row.name}
                       {row.grade && (
-                        <div className="text-[10px] leading-tight text-gray-500 italic">{row.grade}</div>
+                        <div className="text-xs leading-snug text-gray-500 italic">{row.grade}</div>
                       )}
                     </td>
                     {row.ranks.map((r, i) => (

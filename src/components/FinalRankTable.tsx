@@ -224,10 +224,10 @@ export const FinalRankTable: React.FC<FinalRankTableProps> = ({ eventId, phase =
               return (
                 <tr key={row.contestant.id} className={rowClass}>
                   <td className="border px-2 py-1 text-center">{row.contestant.number || idx + 1}</td>
-                  <td className="border px-2 py-1">
+                  <td className="border px-2 py-1 text-sm leading-snug">
                     {row.contestant.name}
                     {row.contestant.grade && (
-                      <div className="text-[10px] leading-tight text-gray-500 italic">{row.contestant.grade}</div>
+                      <div className="text-xs leading-snug text-gray-500 italic">{row.contestant.grade}</div>
                     )}
                   </td>
                   <td className="border px-2 py-1 text-center font-bold">{row.totalScore.toFixed(2)}</td>

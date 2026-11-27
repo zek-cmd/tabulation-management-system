@@ -213,11 +213,11 @@ export function RawScoresTable({ judgeId, eventId, tableClassName, phase }: { ju
                 <tr key={contestant.id}>
                   <td className="border-b-2 border-muted p-1 text-xs text-center">
                     <div className="font-mono font-semibold">#{contestant.number}</div>
-                    <div className="text-[10px] leading-tight text-muted-foreground whitespace-normal max-w-[9rem] mx-auto">
+                    <div className="text-sm leading-snug text-muted-foreground whitespace-normal max-w-[11rem] mx-auto">
                       {contestant.name}
                     </div>
                     {contestant.grade && (
-                      <div className="text-[10px] leading-tight text-muted-foreground/80 whitespace-normal max-w-[9rem] mx-auto italic">
+                      <div className="text-xs leading-snug text-muted-foreground/80 whitespace-normal max-w-[11rem] mx-auto italic">
                         {contestant.grade}
                       </div>
                     )}
@@ -265,11 +265,11 @@ export function RawScoresTable({ judgeId, eventId, tableClassName, phase }: { ju
                   <tr key={contestant.id}>
                     <td className="border-b-2 border-muted p-1 text-xs text-center">
                       <div className="font-mono font-semibold">#{contestant.number}</div>
-                      <div className="text-[10px] leading-tight text-muted-foreground whitespace-normal max-w-[9rem] mx-auto">
+                      <div className="text-sm leading-snug text-muted-foreground whitespace-normal max-w-[11rem] mx-auto">
                         {contestant.name}
                       </div>
                       {contestant.grade && (
-                        <div className="text-[10px] leading-tight text-muted-foreground/80 whitespace-normal max-w-[9rem] mx-auto italic">
+                        <div className="text-xs leading-snug text-muted-foreground/80 whitespace-normal max-w-[11rem] mx-auto italic">
                           {contestant.grade}
                         </div>
                       )}

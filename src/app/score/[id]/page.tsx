@@ -710,8 +710,8 @@ export default function JudgeScorePage() {
                         <tr key={contestant.id} className={rowClass}>
                           <td className="border-b-2 border-muted p-1 font-mono whitespace-nowrap text-xs text-center">
                             <div className="font-semibold">{event?.separateGenders && contestant.sex ? `${sexTag(contestant.sex)}-` : ''}#{contestant.number}</div>
-                            <div className="text-[10px] leading-tight text-muted-foreground whitespace-normal">{contestant.name}</div>
-                            {contestant.grade && <div className="text-[10px] leading-tight text-muted-foreground/80 whitespace-normal italic">{contestant.grade}</div>}
+                            <div className="text-base leading-snug text-muted-foreground whitespace-normal">{contestant.name}</div>
+                            {contestant.grade && <div className="text-sm leading-snug text-muted-foreground/80 whitespace-normal italic">{contestant.grade}</div>}
                           </td>
                           {mainGroups.map((main, mainIdx) => (
                             main.subCriterias.map((sub, subIdx) => (
@@ -797,8 +797,8 @@ export default function JudgeScorePage() {
                         <tr key={contestant.id} className={rowClass}>
                           <td className="border-b-2 border-muted p-1 font-mono whitespace-nowrap text-xs text-center">
                             <div className="font-semibold">{event?.separateGenders && contestant.sex ? `${sexTag(contestant.sex)}-` : ''}#{contestant.number}</div>
-                            <div className="text-[10px] leading-tight text-muted-foreground whitespace-normal">{contestant.name}</div>
-                            {contestant.grade && <div className="text-[10px] leading-tight text-muted-foreground/80 whitespace-normal italic">{contestant.grade}</div>}
+                            <div className="text-base leading-snug text-muted-foreground whitespace-normal">{contestant.name}</div>
+                            {contestant.grade && <div className="text-sm leading-snug text-muted-foreground/80 whitespace-normal italic">{contestant.grade}</div>}
                           </td>
                           {mainGroups.map((main, mainIdx) => (
                             main.subCriterias.map((sub, subIdx) => (

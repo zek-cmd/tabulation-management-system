@@ -192,8 +192,8 @@ export const ContestantBreakdownTable: React.FC<ContestantBreakdownTableProps> =
                 <tr key={contestant.id}>
                   <td className="border px-2 py-1 text-center">
                     <div className="font-mono text-xs">{contestant.number || idx + 1}</div>
-                    <div className="text-[10px] leading-tight text-gray-600 whitespace-normal">{contestant.name}</div>
-                    {contestant.grade && <div className="text-[10px] leading-tight text-gray-500 whitespace-normal italic">{contestant.grade}</div>}
+                    <div className="text-sm leading-snug text-gray-600 whitespace-normal">{contestant.name}</div>
+                    {contestant.grade && <div className="text-xs leading-snug text-gray-500 whitespace-normal italic">{contestant.grade}</div>}
                   </td>
                   {mainCriteria.flatMap((criteria) => {
                     const score = contestant.criteriaScores.find((cs) => cs.criteriaId === criteria.id)?.score ?? 0;

@@ -140,8 +140,8 @@ export function CategoryRankTable({ contestants, eventSettings }: CategoryRankTa
                   <tr key={c.contestantId} className={rowClass}>
                     <td className="border px-2 py-1 text-center">
                       <div className="font-mono text-xs">{c.number}</div>
-                      <div className="text-[10px] leading-tight text-gray-600 whitespace-normal">{c.contestantName}</div>
-                      {c.contestantGrade && <div className="text-[10px] leading-tight text-gray-500 whitespace-normal italic">{c.contestantGrade}</div>}
+                      <div className="text-sm leading-snug text-gray-600 whitespace-normal">{c.contestantName}</div>
+                      {c.contestantGrade && <div className="text-xs leading-snug text-gray-500 whitespace-normal italic">{c.contestantGrade}</div>}
                     </td>
                   {judgeIds.map((judgeId, jIdx) => (
                     <React.Fragment key={`judge-${jIdx}`}>
