@@ -10,6 +10,22 @@ const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
+// Pick the port to listen on: --port <n> / --port=<n> argument first,
+// then PORT from the environment, then 3000.
+function resolvePort(argv, env) {
+  const args = argv || [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--port' || arg === '-p') {
+      if (args[i + 1]) return args[i + 1];
+    }
+    if (arg.startsWith('--port=')) {
+      return arg.slice('--port='.length);
+    }
+  }
+  return env.PORT || 3000;
+}
+
 // In-memory map to track active judges
 const activeJudges = new Map();
 
@@ -203,7 +219,10 @@ app.prepare().then(() => {
     }
   });
 
-  const port = process.env.PORT || 3000;
+  // Port priority: --port <n> argument > PORT env var > 3000.
+  // Works in any shell:  node server.js --port 4000
+  // PowerShell:         $env:PORT=4000; npm run dev
+  const port = resolvePort(process.argv, process.env);
   // Bind to every network interface so other devices (judges' phones) can reach the app.
   // Override with HOST=127.0.0.1 to keep it on this machine only.
   const host = process.env.HOST || '0.0.0.0';
