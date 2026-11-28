@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogTrigger, DialogContent, DialogTitle, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
@@ -10,6 +10,7 @@ import { RankPerJudgeTable } from "@/components/RankPerJudgeTable";
 import { ContestantBreakdownTable } from "@/components/ContestantBreakdownTable";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { getApiUrl } from "@/lib/api";
+import { useRealtimeData } from "@/lib/useRealtimeData";
 import { Medal, Eye, Printer, Star, Mic, UserCheck, Crown, User, Waves, Sparkles } from "lucide-react";
 
 type Category = {
@@ -70,6 +71,9 @@ export function ResultsTab({ categories, categoriesLoading, eventId, event }: Re
   const [finalRankDialog, setFinalRankDialog] = useState(false);
   const [contestantRankDialog, setContestantRankDialog] = useState(false);
   const [selectedViewPhase, setSelectedViewPhase] = useState<string>(event?.currentPhase || "PRELIMINARY");
+  // Grows whenever a judge saves scores -> the open result dialogs refetch below
+  const numericEventId = parseInt(Array.isArray(eventId) ? eventId[0] : (eventId || "0"));
+  const realtimeVersion = useRealtimeData(numericEventId);
 
   // Map criteria identifier to icon component and color
   const getCategoryIcon = (identifier: string) => {
@@ -112,6 +116,22 @@ export function ResultsTab({ categories, categoriesLoading, eventId, event }: Re
       setCategoryError(prev => ({ ...prev, [identifier]: "" }));
     }
   };
+
+  // Live refresh: when a judge saves scores, pull the numbers again for any
+  // result dialog that is currently open, without closing it.
+  useEffect(() => {
+    if (realtimeVersion === 0) return;
+    const openIdentifiers = Object.keys(categoryDialogs).filter(id => categoryDialogs[id]);
+    if (openIdentifiers.length === 0 && !finalRankDialog && !contestantRankDialog && !rankPerJudgeDialog) return;
+
+    openIdentifiers.forEach(identifier => {
+      fetch(getApiUrl(`/api/category-scores?category=${encodeURIComponent(identifier)}&eventId=${numericEventId}&phase=${selectedViewPhase}`))
+        .then(res => (res.ok ? res.json() : Promise.reject(new Error(`HTTP ${res.status}`)))
+        )
+        .then(data => setCategoryData(prev => ({ ...prev, [identifier]: data })))
+        .catch(error => console.error("Error refreshing category scores:", error));
+    });
+  }, [realtimeVersion, categoryDialogs, finalRankDialog, contestantRankDialog, rankPerJudgeDialog, numericEventId, selectedViewPhase]);
 
   return (
     <div className="h-full min-h-0 flex flex-col">

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notifyJudgeViews } from "@/lib/realtimeNotify";
 
 export async function POST(req: NextRequest) {
   const { name, weight, autoAssignToAllContestants, parentId } = await req.json();
@@ -26,5 +27,6 @@ export async function POST(req: NextRequest) {
       autoAssignToAllContestants: !!autoAssignToAllContestants,
     },
   });
+  await notifyJudgeViews(req, criteria.eventId, "criteria");
   return NextResponse.json(criteria);
 }

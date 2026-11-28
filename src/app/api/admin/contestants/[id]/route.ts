@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notifyJudgeViews } from "@/lib/realtimeNotify";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { number, name, sex, grade } = await req.json();
@@ -16,6 +17,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       grade: grade || null,
     },
   });
+  await notifyJudgeViews(req, contestant.eventId, "contestants");
   return NextResponse.json(contestant);
 }
 
@@ -24,6 +26,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   if (!id) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
+  const existing = await prisma.contestant.findUnique({ where: { id: Number(id) } });
   await prisma.contestant.delete({ where: { id: Number(id) } });
+  if (existing) await notifyJudgeViews(req, existing.eventId, "contestants");
   return NextResponse.json({ success: true });
 }

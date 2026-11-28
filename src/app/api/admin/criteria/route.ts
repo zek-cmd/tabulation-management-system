@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Phase } from "@prisma/client";
+import { notifyJudgeViews } from "@/lib/realtimeNotify";
 
 // GET: List all main criteria and their sub-criteria for the selected event
 export async function GET(req: NextRequest) {
@@ -53,5 +54,6 @@ export async function POST(req: NextRequest) {
       autoAssignToAllContestants: false,
     },
   });
+  await notifyJudgeViews(req, criteria.eventId, "criteria");
   return NextResponse.json(criteria);
 }

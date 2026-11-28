@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getApiUrl } from "@/lib/api";
+import { useRealtimeData } from "@/lib/useRealtimeData";
 import { GENDER_GROUP_LABELS, GENDER_ORDER, genderKey } from "@/lib/gender";
 
 interface RawScore {
@@ -44,6 +45,8 @@ export const ContestantBreakdownTable: React.FC<ContestantBreakdownTableProps> =
   const [scores, setScores] = useState<RawScore[]>([]);
   const [contestants, setContestants] = useState<Contestant[]>([]);
   const [criteria, setCriteria] = useState<Criteria[]>([]);
+  // Grows whenever a judge saves scores -> refetch below
+  const realtimeVersion = useRealtimeData(eventId);
 
   useEffect(() => {
     fetch(getApiUrl(`/api/raw-scores?eventId=${eventId}&phase=${phase}`))
@@ -57,7 +60,7 @@ export const ContestantBreakdownTable: React.FC<ContestantBreakdownTableProps> =
         setCriteria(data.criteria);
         setLoading(false);
       });
-  }, [eventId, phase]);
+  }, [eventId, phase, realtimeVersion]);
 
   if (loading) return <div className="py-8 text-center">Loading...</div>;
 

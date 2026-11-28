@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notifyJudgeViews } from "@/lib/realtimeNotify";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -26,5 +27,6 @@ export async function POST(req: NextRequest) {
       eventId: Number(eventId),
     },
   });
+  await notifyJudgeViews(req, contestant.eventId, "contestants");
   return NextResponse.json(contestant);
 }

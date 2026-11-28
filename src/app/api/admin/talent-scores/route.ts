@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Phase } from "@prisma/client";
+import { notifyJudgeViews } from "@/lib/realtimeNotify";
 
 // GET: Fetch talent scores for a specific judge and event
 export async function GET(req: NextRequest) {
@@ -124,6 +125,9 @@ export async function POST(req: NextRequest) {
         })
       ),
     });
+
+    // Tell the admin screens that talent scores just changed.
+    await notifyJudgeViews(req, eventId, "scores");
 
     return NextResponse.json({ success: true, count: created.count });
   } catch (error) {

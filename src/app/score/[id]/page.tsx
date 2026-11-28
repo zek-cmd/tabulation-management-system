@@ -52,6 +52,8 @@ export default function JudgeScorePage() {
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected'>('connecting');
   const [adminEncodedTalentCriteria, setAdminEncodedTalentCriteria] = useState<Set<number>>(new Set());
+  // Bumped whenever the admin changes contestants, judges or criteria
+  const [dataVersion, setDataVersion] = useState(0);
 
   // Theme toggle function
   const toggleTheme = () => {
@@ -225,7 +227,7 @@ export default function JudgeScorePage() {
 
   useEffect(() => {
     async function fetchData() {
-      // First fetch the judge to get eventId
+      // First fetch the judge to get eventId (and pick up any admin edit)
       const judgeRes = await fetch(getApiUrl(`/api/admin/judges`));
       const judgeData = await judgeRes.json();
       const foundJudge = judgeData.find((j: { id: number }) => j.id.toString() === judgeId);
@@ -256,15 +258,10 @@ export default function JudgeScorePage() {
     }
     if (judgeId) {
       fetchData();
-      // Ensure judgeId is string or number, not array
-      const id = Array.isArray(judgeId) ? judgeId[0] : judgeId;
-      connectJudgeSocket(id);
     }
-    // On unmount, disconnect socket
-    return () => {
-      disconnectJudgeSocket();
-    };
-  }, [judgeId, determineFinalists]);
+    // The socket is connected and cleaned up by the listener effect below,
+    // so a data refresh here never knocks the judge out of the event room.
+  }, [judgeId, determineFinalists, dataVersion]);
 
   // Join event room and listen for phase changes when event is loaded
   useEffect(() => {
@@ -272,6 +269,7 @@ export default function JudgeScorePage() {
 
     console.log("Setting up socket for judge:", judgeId, "event:", event.id);
     const socket = connectJudgeSocket(Array.isArray(judgeId) ? judgeId[0] : judgeId);
+    // Join now if ready; judgeSocket joins again after every reconnect.
     joinEventRoom(event.id);
 
     const handlePhaseChanged = (data: { currentPhase: string }) => {
@@ -288,11 +286,18 @@ export default function JudgeScorePage() {
       }
     };
 
+    const handleDataChanged = (data: { eventId: number; type: string }) => {
+      console.log("Admin data change received:", data);
+      // Pull fresh contestants, judges and criteria without a page refresh
+      setDataVersion(v => v + 1);
+    };
+
     socket.on('connect', handleConnect);
     socket.on('disconnect', handleDisconnect);
     socket.on('connecting', handleConnecting);
     socket.on('phase-changed', handlePhaseChanged);
     socket.on('judge-lock-changed', handleJudgeLockChanged);
+    socket.on('data-changed', handleDataChanged);
 
     // Check if socket is already connected when we set up listeners
     if (socket.connected) {
@@ -307,8 +312,22 @@ export default function JudgeScorePage() {
       socket.off('connecting', handleConnecting);
       socket.off('phase-changed', handlePhaseChanged);
       socket.off('judge-lock-changed', handleJudgeLockChanged);
+      socket.off('data-changed', handleDataChanged);
     };
   }, [event?.id, judgeId, handleConnect, handleDisconnect, handleConnecting]);
+
+  // Safety net: if the live connection drops, still pick up admin changes
+  // by asking the server again every few seconds until it is back.
+  useEffect(() => {
+    if (!event?.id) return;
+    if (connectionStatus === 'connected') return;
+
+    const timer = setInterval(() => {
+      setDataVersion(v => v + 1);
+    }, 8000);
+
+    return () => clearInterval(timer);
+  }, [connectionStatus, event?.id]);
 
   // Refetch criteria when phase changes
   useEffect(() => {
@@ -318,7 +337,7 @@ export default function JudgeScorePage() {
       setCriteria(await criteriaRes.json());
     }
     fetchCriteria();
-  }, [event?.currentPhase, event?.id]);
+  }, [event?.currentPhase, event?.id, dataVersion]);
 
   // Update filtered contestants when event changes
   useEffect(() => {

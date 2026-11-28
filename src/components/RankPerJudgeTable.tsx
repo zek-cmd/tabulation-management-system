@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getApiUrl } from "@/lib/api";
+import { useRealtimeData } from "@/lib/useRealtimeData";
 import { GENDER_GROUP_LABELS, GENDER_ORDER, genderKey } from "@/lib/gender";
 
 interface RawScore {
@@ -45,6 +46,9 @@ export const RankPerJudgeTable: React.FC<RankPerJudgeTableProps> = ({ eventId, p
   const [contestants, setContestants] = useState<Contestant[]>([]);
   const [criteria, setCriteria] = useState<{ id: number; parentId?: number | null }[]>([]);
 
+  // Grows whenever a judge saves scores -> refetch below
+  const realtimeVersion = useRealtimeData(eventId);
+
   // Helper function to render ordinal rank
   const getOrdinalRank = (rank: number): string => {
     if (rank === 1) return "1st";
@@ -71,7 +75,7 @@ export const RankPerJudgeTable: React.FC<RankPerJudgeTableProps> = ({ eventId, p
         setCriteria(data.criteria);
         setLoading(false);
       });
-  }, [eventId, phase]);
+  }, [eventId, phase, realtimeVersion]);
 
   if (loading) return <div className="py-8 text-center">Loading...</div>;
 

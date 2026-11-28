@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notifyJudgeViews } from "@/lib/realtimeNotify";
 
 // GET all judges for the current event
 export async function GET(req: NextRequest) {
@@ -25,5 +26,6 @@ export async function POST(req: NextRequest) {
       eventId: Number(eventId),
     },
   });
+  await notifyJudgeViews(req, judge.eventId, "judges");
   return NextResponse.json(judge);
 }

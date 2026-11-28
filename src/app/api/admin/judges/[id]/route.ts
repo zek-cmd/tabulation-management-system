@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { notifyJudgeViews } from "@/lib/realtimeNotify";
 
 type RouteParams = Promise<{ id: string }>;
 
@@ -31,9 +32,26 @@ export async function PUT(req: NextRequest, { params }: { params: RouteParams })
       where: { id: judgeId },
       data: { number: Number(number), name },
     });
+    // Emit real-time update for name/number changes so judges see the new label
+    await notifyJudgeViews(req, judge.eventId, "judges");
+
     return NextResponse.json(judge);
   } catch {
     return NextResponse.json({ error: "Failed to update judge" }, { status: 500 });
+  }
+}
+
+// DELETE judge by ID
+export async function DELETE(req: NextRequest, { params }: { params: RouteParams }) {
+  const { id } = await params;
+  const judgeId = Number(id);
+  try {
+    const judge = await prisma.judge.findUnique({ where: { id: judgeId } });
+    await prisma.judge.delete({ where: { id: judgeId } });
+    if (judge) await notifyJudgeViews(req, judge.eventId, "judges");
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Failed to delete judge" }, { status: 500 });
   }
 }
 

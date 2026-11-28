@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from "react";
 import { getApiUrl } from "@/lib/api";
+import { useRealtimeData } from "@/lib/useRealtimeData";
 import { GENDER_GROUP_LABELS, GENDER_ORDER, genderKey } from "@/lib/gender";
 interface RawScore {
   contestantId: number;
@@ -48,6 +49,8 @@ export function RawScoresTable({ judgeId, eventId, tableClassName, phase }: { ju
   const [contestants, setContestants] = useState<Contestant[]>([]);
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
+  // Grows whenever a judge saves scores for this event -> refetch below
+  const realtimeVersion = useRealtimeData(eventId);
   // Destructure eventId from props to avoid ReferenceError
   useEffect(() => {
     setLoading(true);
@@ -75,7 +78,7 @@ export function RawScoresTable({ judgeId, eventId, tableClassName, phase }: { ju
         setEvent(data.event);
         setLoading(false);
       });
-  }, [judgeId, eventId, phase]);
+  }, [judgeId, eventId, phase, realtimeVersion]);
   if (loading) return <div className="text-center py-8">Loading raw scores...</div>;
   const mainGroups = criteria
     .filter((c) => !c.parentId)

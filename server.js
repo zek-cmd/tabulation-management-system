@@ -180,6 +180,26 @@ app.prepare().then(() => {
       }
     }
 
+    // Handle data change emissions from API routes
+    // (admin created / edited / deleted contestants, judges or criteria)
+    if (req.url?.startsWith('/api/emit-data-change/') || req.url?.startsWith('/tabulation/api/emit-data-change/')) {
+      const cleanUrl = req.url.split('?')[0];
+      const urlParts = cleanUrl.split('/');
+      const isBasePath = cleanUrl.startsWith('/tabulation/');
+      const eventId = urlParts[isBasePath ? 4 : 3];
+      const dataType = urlParts[isBasePath ? 5 : 4];
+
+      if (eventId && dataType) {
+        console.log(`Emitting data change from HTTP: eventId=${eventId}, type=${dataType}`);
+        io.to(`event-${eventId}`).emit('data-changed', { eventId: parseInt(eventId), type: dataType });
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ success: true }));
+      } else {
+        res.statusCode = 400;
+        res.end(JSON.stringify({ error: 'Invalid parameters' }));
+      }
+    }
+
     // Handle judge logout from API routes
     if (req.url?.startsWith('/api/judge-logout/') || req.url?.startsWith('/tabulation/api/judge-logout/')) {
       if (req.method === 'POST') {

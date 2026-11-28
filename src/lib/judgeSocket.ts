@@ -4,7 +4,23 @@ let socket: Socket | null = null;
 
 let heartbeatInterval: NodeJS.Timeout | null = null;
 
+// Remembered so a reconnect rejoins the event room by itself
+let currentJudgeId: number | string | null = null;
+let currentEventId: number | string | null = null;
+
+// Listeners are attached once per socket, never again
+let handlersBound = false;
+
+function rejoinEventRoom() {
+  if (socket && currentEventId) {
+    console.log("Rejoining event room:", currentEventId);
+    socket.emit("join-event", currentEventId);
+  }
+}
+
 export function connectJudgeSocket(judgeId: number | string) {
+  currentJudgeId = judgeId;
+
   if (!socket) {
     const isProduction = window.location.protocol === 'https:';
     socket = io({
@@ -20,26 +36,32 @@ export function connectJudgeSocket(judgeId: number | string) {
       randomizationFactor: 0.5,
       upgrade: false           // Disable WebSocket upgrades entirely
     });
+    handlersBound = false;
   }
 
-  socket.on("connect", () => {
-    console.log("Judge socket connected:", judgeId, "Transport:", socket?.io.engine.transport.name);
-    socket?.emit("judge-online", judgeId);
-    
-    // Start heartbeat
-    startHeartbeat(judgeId);
+  const activeSocket = socket;
+
+  // Attach the listeners only once: attaching them again on every call
+  // left the page with dead handlers on the previous socket.
+  if (handlersBound) return activeSocket;
+
+  activeSocket.on("connect", () => {
+    console.log("Judge socket connected:", currentJudgeId, "Transport:", activeSocket.io.engine.transport.name);
+    activeSocket.emit("judge-online", currentJudgeId);
+    // A reconnect creates a fresh connection on the server, so the room
+    // membership is gone: join it again to keep receiving the admin's changes.
+    rejoinEventRoom();
+    startHeartbeat();
   });
 
-  socket.on("connect_error", (error) => {
+  activeSocket.on("connect_error", (error) => {
     console.error("Judge socket connection error:", error);
     stopHeartbeat();
   });
 
-  socket.on("disconnect", (reason) => {
+  activeSocket.on("disconnect", (reason) => {
     console.log("Judge socket disconnected:", reason);
     stopHeartbeat();
-    
-    // If disconnect was unexpected (not client-initiated), socket.io will handle reconnection
     if (reason === "transport close" || reason === "transport error") {
       console.log("Network-related disconnect, will attempt to reconnect...");
     } else if (reason === "io client disconnect") {
@@ -47,31 +69,34 @@ export function connectJudgeSocket(judgeId: number | string) {
     }
   });
 
-  socket.on("reconnect", (attemptNumber) => {
+  activeSocket.on("reconnect", (attemptNumber) => {
     console.log("Judge socket reconnected after", attemptNumber, "attempts");
-    socket?.emit("judge-online", judgeId);
-    startHeartbeat(judgeId);
+    activeSocket.emit("judge-online", currentJudgeId);
+    rejoinEventRoom();
+    startHeartbeat();
   });
 
-  socket.on("reconnect_error", (error) => {
+  activeSocket.on("reconnect_error", (error) => {
     console.error("Judge socket reconnection error:", error);
   });
 
-  socket.on("reconnect_failed", () => {
+  activeSocket.on("reconnect_failed", () => {
     console.error("Judge socket failed to reconnect after all attempts");
     stopHeartbeat();
   });
 
-  return socket;
+  handlersBound = true;
+
+  return activeSocket;
 }
 
-function startHeartbeat(judgeId: number | string) {
+function startHeartbeat() {
   stopHeartbeat(); // Clear any existing heartbeat
-  
+
   heartbeatInterval = setInterval(() => {
     if (socket && socket.connected) {
-      socket.emit("judge-heartbeat", judgeId);
-      console.log("Heartbeat sent for judge:", judgeId);
+      socket.emit("judge-heartbeat", currentJudgeId);
+      console.log("Heartbeat sent for judge:", currentJudgeId);
     }
   }, 30000); // Send heartbeat every 30 seconds
 }
@@ -84,11 +109,14 @@ function stopHeartbeat() {
 }
 
 export function joinEventRoom(eventId: number | string) {
+  currentEventId = eventId;
+
   if (socket) {
     console.log("Joining event room:", eventId);
     socket.emit("join-event", eventId);
   } else {
-    console.error("Cannot join event room: socket not connected");
+    // The room is remembered and joined as soon as the socket connects
+    console.log("Socket not ready yet, will join event room on connect:", eventId);
   }
 }
 
@@ -98,4 +126,5 @@ export function disconnectJudgeSocket() {
     socket.disconnect();
     socket = null;
   }
+  handlersBound = false;
 }
